@@ -4,12 +4,20 @@ import Home from "./pages/Home";
 import PostDetail from "./pages/PostDetail";
 import CreatePost from "./pages/CreatePost";
 import { useState } from "react";
+import {v4 as uuidv4} from "uuid";
 
 
 function App() {
 
   
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState([
+    {
+      id: uuidv4(),
+      title: "title",
+      content: "content"
+
+    }
+  ]);
 
 
   return (
@@ -20,7 +28,7 @@ function App() {
       {/* Page Content */}
       <div className="max-w-4xl mx-auto px-4 py-6">
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Home posts={posts} />} />
           <Route path="/post/:id" element={<PostDetail />} />
           <Route path="/create" element={<CreatePost />} />
         </Routes>
