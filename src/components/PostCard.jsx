@@ -1,15 +1,15 @@
 import { Link } from "react-router-dom";
 
-function PostCard() {
+function PostCard({post}) {
   return (
     <div className="border rounded-xl p-4 shadow-sm hover:shadow-md transition">
-      <h2 className="text-xl font-semibold mb-2">Post Title</h2>
+      <h2 className="text-xl font-semibold mb-2">{post.title}</h2>
       <p className="text-gray-600 mb-3">
-        This is a short preview of the blog post...
+        {post.content}
       </p>
 
       <Link
-        to="/post/1"
+        to={`/post/${post.id}`}
         className="text-blue-600 font-medium hover:underline"
       >
         Read More →

@@ -25,7 +25,9 @@ function Home({posts}) {
       <h2 className="text-2xl font-bold mb-6">All Posts</h2>
 
       <div className="space-y-4">
+        
         <div>
+        {/* Accepting posts n only returning one post for each postcard */}
         {posts.map(post=>{
           return <PostCard key={post.id} post={post}/>;
         } )}
