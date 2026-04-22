@@ -34,7 +34,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home posts={posts} />} />
           <Route path="/post/:id" element={<PostDetail />} />
-          <Route path="/create" element={<CreatePost />} />
+          <Route path="/create" element={<CreatePost addPost={addPost}/>} />
         </Routes>
       </div>
     </BrowserRouter>
