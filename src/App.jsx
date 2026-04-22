@@ -5,6 +5,7 @@ import PostDetail from "./pages/PostDetail";
 import CreatePost from "./pages/CreatePost";
 import { useState } from "react";
 import {v4 as uuidv4} from "uuid";
+import { useEffect } from "react";
 
 
 function App() {
@@ -21,6 +22,9 @@ function App() {
     return savedPosts ? JSON.parse(savedPosts) : []
    }
   )
+  useEffect(()=>{
+    localStorage.setItem('all_posts', JSON.stringify(posts))
+  }, [posts])
    
 
 
