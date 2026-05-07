@@ -1,16 +1,23 @@
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Layout from './components/Layout';
+import Dashboard from './pages/Dashboard';
+import Inventory from './pages/Inventory';
+import Transactions from './pages/Transactions';
+
 function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900">
-      <div className="text-center">
-        <h1 className="text-5xl font-extrabold text-white tracking-tight">
-          Garage<span className="text-blue-500">Flow</span>
-        </h1>
-        <p className="text-slate-400 mt-4 text-lg">
-          Ready to build a winning inventory system.
-        </p>
-      </div>
-    </div>
-  )
+    <Router>
+      <Routes>
+        {/* The Layout component wraps all routes to keep the sidebar persistent */}
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="inventory" element={<Inventory />} />
+          <Route path="transactions" element={<Transactions />} />
+        </Route>
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;
