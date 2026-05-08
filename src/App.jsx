@@ -1,5 +1,3 @@
-
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
@@ -7,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
 import Transactions from './pages/Transactions';
 import Settings from './pages/Settings';
+import Requests from './pages/Requests';
 
 // A tiny helper component to protect routes based on roles
 const ProtectedRoute = ({ children, requiredRole }) => {
@@ -39,6 +38,7 @@ function AppRoutes() {
         {/* Shared Routes */}
         <Route path="inventory" element={<Inventory />} />
         <Route path="transactions" element={<Transactions />} />
+        <Route path="requests" element={<Requests />} />
       </Route>
     </Routes>
   );
