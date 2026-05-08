@@ -1,21 +1,37 @@
 import { useState } from 'react';
-import { Search, Filter, ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { Search, Filter, ArrowDownRight, ArrowUpRight, User } from 'lucide-react';
 import { mockTransactions } from '../data/mockData';
+import { useAuth } from '../context/AuthContext';
 
 const Transactions = () => {
+  const { user } = useAuth(); // Get the current user!
+  
   const [searchTerm, setSearchTerm] = useState("");
-  const [typeFilter, setTypeFilter] = useState("ALL"); // ALL, IN, or OUT
+  const [typeFilter, setTypeFilter] = useState("ALL");
+  const [mechanicFilter, setMechanicFilter] = useState("ALL");
 
-  // Filter the transactions based on search and type
-  const filteredTransactions = mockTransactions.filter(tx => {
-    const matchesSearch = tx.itemName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          tx.mechanic.toLowerCase().includes(searchTerm.toLowerCase());
+  // Step 1: Base the data entirely on who is logged in.
+  // Managers see everything. Mechanics ONLY see their own records.
+  const baseTransactions = user.role === 'MANAGER' 
+    ? mockTransactions 
+    : mockTransactions.filter(tx => tx.mechanic === user.name);
+
+  // Get a unique list of mechanics for the Manager's filter dropdown
+  const uniqueMechanics = ["ALL", ...new Set(mockTransactions.map(tx => tx.mechanic))];
+
+  // Step 2: Apply the search and dropdown filters to the allowed data
+  const filteredTransactions = baseTransactions.filter(tx => {
+    const matchesSearch = tx.itemName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = typeFilter === "ALL" || tx.type === typeFilter;
     
-    return matchesSearch && matchesType;
+    // Mechanics don't use the mechanic filter, so we only apply it for managers
+    const matchesMechanic = user.role === 'MANAGER' 
+      ? (mechanicFilter === "ALL" || tx.mechanic === mechanicFilter) 
+      : true; 
+    
+    return matchesSearch && matchesType && matchesMechanic;
   });
 
-  // Helper to format the ugly ISO date string into something readable
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
     return new Date(dateString).toLocaleDateString('en-RW', options);
@@ -23,35 +39,40 @@ const Transactions = () => {
 
   return (
     <div className="space-y-6 flex flex-col h-full">
-      {/* Page Header */}
+      {/* ADAPTIVE HEADER: Changes based on role */}
       <div>
-        <h2 className="text-2xl font-bold text-slate-800">Transaction History</h2>
-        <p className="text-slate-500 text-sm mt-1">A complete ledger of all parts moving in and out of the garage.</p>
+        <h2 className="text-2xl font-bold text-slate-800">
+          {user.role === 'MANAGER' ? 'Garage Ledger' : 'My Usage History'}
+        </h2>
+        <p className="text-slate-500 text-sm mt-1">
+          {user.role === 'MANAGER' 
+            ? 'A complete, unfiltered history of all parts moving in and out of the garage.' 
+            : 'Track the parts you have checked out for your specific repair jobs.'}
+        </p>
       </div>
 
       {/* Filters & Search Bar */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col sm:flex-row gap-4">
-        {/* Search Input */}
+        
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-5 w-5 text-slate-400" />
           </div>
           <input
             type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-500 outline-none bg-slate-50"
-            placeholder="Search by part name or mechanic..."
+            className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50"
+            placeholder="Search by part name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
-        {/* Type Filter */}
         <div className="relative w-full sm:w-48">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Filter className="h-4 w-4 text-slate-400" />
           </div>
           <select
-            className="block w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-500 outline-none bg-slate-50 appearance-none"
+            className="block w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50 appearance-none"
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
           >
@@ -60,6 +81,24 @@ const Transactions = () => {
             <option value="IN">Parts In (Restock)</option>
           </select>
         </div>
+
+        {/* ADAPTIVE FILTER: Only Managers get to filter by specific staff */}
+        {user.role === 'MANAGER' && (
+          <div className="relative w-full sm:w-48">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <User className="h-4 w-4 text-slate-400" />
+            </div>
+            <select
+              className="block w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none bg-slate-50 appearance-none"
+              value={mechanicFilter}
+              onChange={(e) => setMechanicFilter(e.target.value)}
+            >
+              {uniqueMechanics.map(name => (
+                <option key={name} value={name}>{name === "ALL" ? "All Staff" : name}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Transaction Table */}
@@ -72,7 +111,11 @@ const Transactions = () => {
                 <th className="px-6 py-4 font-semibold">Type</th>
                 <th className="px-6 py-4 font-semibold">Part Name</th>
                 <th className="px-6 py-4 font-semibold text-center">Qty</th>
-                <th className="px-6 py-4 font-semibold">User / Mechanic</th>
+                
+                {/* ADAPTIVE COLUMN: Mechanics don't need to see their own name on every row */}
+                {user.role === 'MANAGER' && (
+                  <th className="px-6 py-4 font-semibold">User / Mechanic</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -93,13 +136,21 @@ const Transactions = () => {
                     </td>
                     <td className="px-6 py-4 font-medium text-slate-800">{tx.itemName}</td>
                     <td className="px-6 py-4 text-center font-bold text-slate-700">{tx.quantity}</td>
-                    <td className="px-6 py-4 text-slate-600">{tx.mechanic}</td>
+                    
+                    {/* ADAPTIVE DATA: Hide the mechanic cell if the user is a mechanic */}
+                    {user.role === 'MANAGER' && (
+                      <td className="px-6 py-4 text-slate-600">{tx.mechanic}</td>
+                    )}
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="px-6 py-12 text-center text-slate-500">
+                  {/* Adjust colSpan based on role so the empty state message spans correctly */}
+                  <td colSpan={user.role === 'MANAGER' ? "5" : "4"} className="px-6 py-12 text-center text-slate-500">
                     <p className="text-lg font-medium text-slate-600">No transactions found</p>
+                    <p className="text-sm mt-1">
+                      {user.role === 'MANAGER' ? 'Adjust your filters to see more data.' : 'You have not checked out any parts yet.'}
+                    </p>
                   </td>
                 </tr>
               )}
